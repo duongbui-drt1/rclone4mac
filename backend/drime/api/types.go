@@ -57,7 +57,6 @@ type Item struct {
 	FileHash     any         `json:"file_hash"`
 	Public       bool        `json:"public"`
 	Thumbnail    bool        `json:"thumbnail"`
-	MuxStatus    any         `json:"mux_status"`
 	ThumbnailURL any         `json:"thumbnail_url"`
 	WorkspaceID  int         `json:"workspace_id"`
 	IsEncrypted  int         `json:"is_encrypted"`
@@ -236,14 +235,6 @@ type MultiPartEntriesResponse struct {
 type MultiPartAbort struct {
 	UploadID string `json:"uploadId"`
 	Key      string `json:"key"`
-}
-
-// FolderPathResponse is returned by GET /folders/{hash}/path
-//
-// Path is the breadcrumb from the drive root down to the requested folder.
-type FolderPathResponse struct {
-	Status string `json:"status"`
-	Path   []Item `json:"path"`
 }
 
 // SpaceUsageResponse is returned by GET /user/space-usage
