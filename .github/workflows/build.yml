@@ -162,11 +162,13 @@ jobs:
       - name: Package zip
         if: steps.gate.outputs.skip == 'false'
         run: |
+          VERSION="$(git describe --tags --always --dirty)"
           ZIP_NAME="rclone-${{ matrix.name }}.zip"
-          FOLDER="rclone-${{ matrix.name }}"
+          FOLDER="rclone-${VERSION}-${{ matrix.name }}"
           mkdir -p "${FOLDER}"
-          cp rclone-${{ matrix.name }}${{ matrix.ext }} "${FOLDER}/rclone${{ matrix.ext }}"
+          cp "rclone-${{ matrix.name }}${{ matrix.ext }}" "${FOLDER}/rclone${{ matrix.ext }}"
           zip -r "${ZIP_NAME}" "${FOLDER}/"
+          rm -rf "${FOLDER}"
 
       - name: Upload zip to GitHub Release (tag push only)
         if: steps.gate.outputs.skip == 'false' && startsWith(github.ref, 'refs/tags/')
