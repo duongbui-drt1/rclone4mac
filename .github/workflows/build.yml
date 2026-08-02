@@ -1,4 +1,4 @@
-# Github Actions build for rclone-extra (All Platforms: Linux, Windows, macOS, Android, iOS)
+# Github Actions build for rclone-extra (Linux, Windows, macOS, Android)
 name: Build rclone-extra - Multi Platform
 
 on:
@@ -15,7 +15,6 @@ on:
           - windows
           - macos
           - android
-          - ios
   push:
     tags:
       - 'v*'
@@ -25,7 +24,7 @@ permissions:
 
 jobs:
 
-  # --- JOB 1: DESKTOP & MOBILE BINARIES (Linux, Windows, macOS, iOS) ---
+  # --- JOB 1: DESKTOP BINARIES (Linux, Windows, macOS) ---
   build:
     name: Build ${{ matrix.name }}
     runs-on: ubuntu-latest
@@ -36,8 +35,7 @@ jobs:
       inputs.target == 'all'      ||
       inputs.target == 'linux'    ||
       inputs.target == 'windows'  ||
-      inputs.target == 'macos'    ||
-      inputs.target == 'ios'
+      inputs.target == 'macos'
 
     strategy:
       fail-fast: false
@@ -70,10 +68,6 @@ jobs:
             ext: ''
           - name: macos-arm64
             goos: darwin
-            goarch: arm64
-            ext: ''
-          - name: ios-arm64
-            goos: ios
             goarch: arm64
             ext: ''
 
@@ -151,10 +145,15 @@ jobs:
             export CGO_LDFLAGS="-static"
             LDFLAGS="$LDFLAGS_BASE -extldflags '-static -static-libgcc -static-libstdc++'"
             TAGS="-tags cmount"
-          else
-            echo "Configuring Pure Go static build..."
+          elif [ "$GOOS" == "linux" ]; then
+            echo "Configuring Linux Pure-Static Build..."
             export CGO_ENABLED=0
             TAGS="-tags netgo,osusergo"
+            LDFLAGS="$LDFLAGS_BASE"
+          else
+            echo "Configuring Pure Go build for $GOOS/$GOARCH..."
+            export CGO_ENABLED=0
+            TAGS=""
             LDFLAGS="$LDFLAGS_BASE"
           fi
 
