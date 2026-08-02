@@ -1,0 +1,7 @@
+# Build temp files
+_build_tmp/
+output/
+
+# OS files
+.DS_Store
+Thumbs.db

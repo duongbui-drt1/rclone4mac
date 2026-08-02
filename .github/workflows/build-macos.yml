@@ -1,0 +1,189 @@
+# Github Actions — Build rclone-extra for macOS
+# Thêm file này vào: .github/workflows/build-macos.yml
+# trong fork của bạn tại GitHub
+#
+# Trigger: push tag dạng v*-extra (vd: v1.75.0-extra)
+#          hoặc chạy thủ công từ tab Actions
+
+name: Build rclone-extra - macOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      arch:
+        description: "Architecture cần build"
+        type: choice
+        required: true
+        default: both
+        options:
+          - both
+          - amd64
+          - arm64
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write   # Cần để upload assets vào release
+
+jobs:
+
+  # ─── Build macOS amd64 (Intel) ──────────────────────────────────────────────
+  build-macos-amd64:
+    name: macOS Intel (amd64)
+    runs-on: macos-13          # macos-13 = Intel runner
+    timeout-minutes: 45
+
+    if: |
+      github.event_name == 'push' ||
+      inputs.arch == 'both'        ||
+      inputs.arch == 'amd64'
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0       # Cần đầy đủ lịch sử để git describe hoạt động
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+          check-latest: true
+          cache: true
+
+      - name: Get version info
+        id: ver
+        run: |
+          VERSION="$(git describe --tags --abbrev=0 2>/dev/null || echo 'dev')"
+          COMMIT="$(git rev-parse --short HEAD)"
+          DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "version=${VERSION}"   >> $GITHUB_OUTPUT
+          echo "commit=${COMMIT}"     >> $GITHUB_OUTPUT
+          echo "date=${DATE}"         >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION} | Commit: ${COMMIT}"
+
+      - name: Build rclone-extra darwin/amd64
+        env:
+          CGO_ENABLED: "0"
+          GOOS: darwin
+          GOARCH: amd64
+        run: |
+          go build \
+            -trimpath \
+            -ldflags "-s -w \
+              -X github.com/rclone/rclone/fs.Version=${{ steps.ver.outputs.version }} \
+              -X main.GitCommit=${{ steps.ver.outputs.commit }} \
+              -X main.BuildDate=${{ steps.ver.outputs.date }}" \
+            -o rclone-extra-darwin-amd64 \
+            .
+
+      - name: Package zip
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          FOLDER="rclone-${VERSION}-darwin-amd64"
+          mkdir -p "${FOLDER}"
+          cp rclone-extra-darwin-amd64 "${FOLDER}/rclone"
+          chmod +x "${FOLDER}/rclone"
+          zip -r "rclone-darwin-amd64.zip" "${FOLDER}/"
+          ls -lh rclone-darwin-amd64.zip
+
+      - name: Test binary
+        run: |
+          chmod +x rclone-extra-darwin-amd64
+          ./rclone-extra-darwin-amd64 version
+
+      - name: Upload artifact (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rclone-darwin-amd64
+          path: rclone-darwin-amd64.zip
+          retention-days: 7
+
+      - name: Upload to Release (on tag push)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: rclone-darwin-amd64.zip
+          fail_on_unmatched_files: true
+
+  # ─── Build macOS arm64 (Apple Silicon) ──────────────────────────────────────
+  build-macos-arm64:
+    name: macOS Apple Silicon (arm64)
+    runs-on: macos-latest      # macos-latest = Apple Silicon (arm64) runner
+    timeout-minutes: 45
+
+    if: |
+      github.event_name == 'push' ||
+      inputs.arch == 'both'        ||
+      inputs.arch == 'arm64'
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+          check-latest: true
+          cache: true
+
+      - name: Get version info
+        id: ver
+        run: |
+          VERSION="$(git describe --tags --abbrev=0 2>/dev/null || echo 'dev')"
+          COMMIT="$(git rev-parse --short HEAD)"
+          DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "version=${VERSION}"   >> $GITHUB_OUTPUT
+          echo "commit=${COMMIT}"     >> $GITHUB_OUTPUT
+          echo "date=${DATE}"         >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION} | Commit: ${COMMIT}"
+
+      - name: Build rclone-extra darwin/arm64
+        env:
+          CGO_ENABLED: "0"
+          GOOS: darwin
+          GOARCH: arm64
+        run: |
+          go build \
+            -trimpath \
+            -ldflags "-s -w \
+              -X github.com/rclone/rclone/fs.Version=${{ steps.ver.outputs.version }} \
+              -X main.GitCommit=${{ steps.ver.outputs.commit }} \
+              -X main.BuildDate=${{ steps.ver.outputs.date }}" \
+            -o rclone-extra-darwin-arm64 \
+            .
+
+      - name: Package zip
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          FOLDER="rclone-${VERSION}-darwin-arm64"
+          mkdir -p "${FOLDER}"
+          cp rclone-extra-darwin-arm64 "${FOLDER}/rclone"
+          chmod +x "${FOLDER}/rclone"
+          zip -r "rclone-darwin-arm64.zip" "${FOLDER}/"
+          ls -lh rclone-darwin-arm64.zip
+
+      - name: Test binary
+        run: |
+          chmod +x rclone-extra-darwin-arm64
+          ./rclone-extra-darwin-arm64 version
+
+      - name: Upload artifact (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rclone-darwin-arm64
+          path: rclone-darwin-arm64.zip
+          retention-days: 7
+
+      - name: Upload to Release (on tag push)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: rclone-darwin-arm64.zip
+          fail_on_unmatched_files: true

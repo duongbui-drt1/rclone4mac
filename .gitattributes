@@ -1,0 +1,12 @@
+# Bắt buộc shell script dùng LF (Unix line endings)
+*.sh text eol=lf
+
+# Workflow YAML cũng dùng LF
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Markdown
+*.md text eol=lf
+
+# Gitignore
+.gitignore text eol=lf
