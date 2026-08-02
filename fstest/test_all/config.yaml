@@ -703,4 +703,18 @@ backends:
      - cmd/bisync
    fastlist: false
    extratime: 2.0
+<<<<<<< HEAD
+ - backend: "terabox"
+   remote: "TestTerabox:"
+   fastlist: false
+   ignore:
+    - TestSyncConcurrentTruncate
+    - TestRWFileHandleWriteNoWrite
+    - TestTransform/prefix
+    - TestTransform/suffix
+   ignoretests:
+    - cmd/bisync
+    - cmd/gitannex
+=======
    listretries: 5
+>>>>>>> 7dcbc8b4f3d89818642a22977d4307f836eafb6c

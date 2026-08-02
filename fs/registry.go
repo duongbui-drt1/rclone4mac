@@ -437,7 +437,7 @@ func Register(info *RegInfo) {
 	var err error
 	info.Overview, err = overview.GetBackendConfig(strings.ReplaceAll(info.Name, " ", ""))
 	if err != nil {
-		Errorf(nil, "internal error: no overview data found for %q", info.Name)
+		Debugf(nil, "internal error: no overview data found for %q", info.Name)
 		info.Overview = new(overview.BackendConfig)
 	}
 	for _, alias := range info.Aliases {
