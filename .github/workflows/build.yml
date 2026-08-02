@@ -170,9 +170,9 @@ jobs:
 
       - name: Upload zip to GitHub Release (tag push only)
         if: steps.gate.outputs.skip == 'false' && startsWith(github.ref, 'refs/tags/')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload ${{ github.ref_name }} rclone-${{ matrix.name }}.zip --clobber
+        uses: softprops/action-gh-release@v2
+        with:
+          files: rclone-${{ matrix.name }}.zip
 
       - name: Upload Artifact
         if: steps.gate.outputs.skip == 'false'
@@ -257,10 +257,9 @@ jobs:
 
       - name: Upload Android zip to GitHub Release (tag push only)
         if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release upload ${{ github.ref_name }} rclone-android-all.zip --clobber
+        uses: softprops/action-gh-release@v2
+        with:
+          files: rclone-android-all.zip
 
       - name: Upload Android Artifacts
         uses: actions/upload-artifact@v4
