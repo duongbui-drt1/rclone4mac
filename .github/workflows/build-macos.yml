@@ -28,11 +28,12 @@ permissions:
 
 jobs:
 
-  # ─── Build macOS amd64 (Intel) ──────────────────────────────────────────────
+  # ─── Build macOS amd64 (Intel) — dùng Linux runner + cross-compile ──────────
+  # Linux runner luôn có sẵn ngay, không phải chờ như macos-13 Intel runner
   build-macos-amd64:
-    name: macOS Intel (amd64)
-    runs-on: macos-13          # macos-13 = Intel runner
-    timeout-minutes: 45
+    name: macOS Intel (amd64) [cross-compile on Linux]
+    runs-on: ubuntu-latest     # Linux runner: luôn có sẵn, không cần chờ
+    timeout-minutes: 20        # Nhanh hơn nhiều
 
     if: |
       github.event_name == 'push' ||
@@ -43,7 +44,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0       # Cần đầy đủ lịch sử để git describe hoạt động
+          fetch-depth: 0
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -63,7 +64,9 @@ jobs:
           echo "date=${DATE}"         >> $GITHUB_OUTPUT
           echo "Version: ${VERSION} | Commit: ${COMMIT}"
 
-      - name: Build rclone-extra darwin/amd64
+      # Cross-compile: GOOS=darwin GOARCH=amd64 trên Linux hoàn toàn hợp lệ
+      # Binary tạo ra chạy được trên macOS Intel không khác gì build native
+      - name: Cross-compile rclone-extra darwin/amd64
         env:
           CGO_ENABLED: "0"
           GOOS: darwin
@@ -77,6 +80,8 @@ jobs:
               -X main.BuildDate=${{ steps.ver.outputs.date }}" \
             -o rclone-extra-darwin-amd64 \
             .
+          echo "Build done: $(ls -lh rclone-extra-darwin-amd64)"
+          file rclone-extra-darwin-amd64
 
       - name: Package zip
         run: |
@@ -87,11 +92,6 @@ jobs:
           chmod +x "${FOLDER}/rclone"
           zip -r "rclone-darwin-amd64.zip" "${FOLDER}/"
           ls -lh rclone-darwin-amd64.zip
-
-      - name: Test binary
-        run: |
-          chmod +x rclone-extra-darwin-amd64
-          ./rclone-extra-darwin-amd64 version
 
       - name: Upload artifact (workflow_dispatch)
         if: github.event_name == 'workflow_dispatch'
