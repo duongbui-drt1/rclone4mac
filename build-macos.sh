@@ -186,10 +186,10 @@ info "Version: ${RCLONE_VERSION}  |  Commit: ${GIT_COMMIT}"
 # ──────────────────────────────────────────────────────────────────────────────
 
 # ── Tải Go dependencies ────────────────────────────────────────────────────────
-header "Bước 4: Tải Go modules"
-info "go mod download ..."
-go mod download -x 2>&1 | tail -5 || true
-ok "Modules đã tải"
+header "Bước 4: Tải Go modules (có thể mất 1-3 phút tùy mạng)"
+info "Tải các thư viện cloud storage ..."
+go mod download
+ok "Modules đã tải xong"
 # ──────────────────────────────────────────────────────────────────────────────
 
 # ── Hàm build cho một architecture ────────────────────────────────────────────
