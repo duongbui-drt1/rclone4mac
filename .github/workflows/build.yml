@@ -115,12 +115,12 @@ jobs:
           unzip -q winfsp.zip
           echo "WINFSP_INC=$(pwd)/winfsp-2.1/inc/fuse" >> $GITHUB_ENV
 
-      - name: Setup Icon (Windows Only)
-        if: steps.gate.outputs.skip == 'false' && matrix.goos == 'windows'
+      - name: Setup Icon (Windows amd64 Only)
+        if: steps.gate.outputs.skip == 'false' && matrix.goos == 'windows' && matrix.goarch == 'amd64'
         run: |
           go install github.com/akavel/rsrc@latest
           curl -L https://raw.githubusercontent.com/rclone/rclone/master/graphics/logo/ico/logo_symbol_color.ico -o rclone.ico
-          rsrc -ico rclone.ico -o rclone.syso
+          rsrc -arch amd64 -ico rclone.ico -o rclone.syso
 
       # --- BUILD STEP ---
       - name: Build Rclone (${{ matrix.name }})
